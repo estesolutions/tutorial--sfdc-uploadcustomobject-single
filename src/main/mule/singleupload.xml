@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<salesforce:sfdc-config name="Salesforce_Sfdc_config" doc:name="Salesforce Sfdc config" doc:id="ac29fce4-d0c5-4395-955b-b4babd4f1606" >
+		<salesforce:basic-connection username="jason@jasonestevan.com" password="SUJ8Xrze" securityToken="REMOVED" />
+	</salesforce:sfdc-config>
+	<flow name="singleuploadFlow" doc:id="9bd2a51e-6d1c-4875-8975-71d82d4f39bd" >
+		<file:listener doc:name="On New File" doc:id="e4884070-0c63-47e1-808e-702d0ad8a30a" directory="C:\Users\Jason\Workspace\MuleSoft\AnypointStudio710\customsfdcobject\usageloader\inbound" moveToDirectory="C:\Users\Jason\Workspace\MuleSoft\AnypointStudio710\customsfdcobject\usageloader\archive">
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+			<file:matcher />
+		</file:listener>
+		<ee:transform doc:name="Transform Message" doc:id="6441da75-cc13-4f57-ac97-3f31b461dcf1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="startTime" ><![CDATA[%dw 2.0
+output application/java
+---
+now()]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<batch:job jobName="singleuploadBatch_Job" doc:id="d95305c0-1c7e-4264-8153-1a9177dc3f73" >
+			<batch:process-records >
+				<batch:step name="SFDC_Upload_Step" doc:id="78039237-21cd-4c2c-aaf3-40cc0d66a36d" >
+					<ee:transform doc:name="Transform Message" doc:id="30ab7181-50d1-47da-b7cc-4078810d7042" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Account_Id__c : payload.Accountid,
+	Company_Id__c : payload.Companyid,
+	Quantity__c : payload.Quantity
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<salesforce:create-single type="Usage__c" doc:name="Create single" doc:id="b695237c-3daf-4d72-a0e9-782419209e42" config-ref="Salesforce_Sfdc_config"/>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<ee:transform doc:name="Transform Message" doc:id="d19d0919-524b-445c-a9c4-7dbaf598a611" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="endTime" ><![CDATA[%dw 2.0
+output application/java
+---
+now()]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="6f8b805a-d046-4d0f-bcdb-cd025a32db0a" message="#['Total Single Uploading ProcessingTime was: ' ++ vars.endTime - vars.startTime]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>
