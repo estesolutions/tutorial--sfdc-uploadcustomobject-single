@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="UsageRecords" format="csv">
+      <types:shape format="weave" example="examples/UsageReport_Sample.csv"><![CDATA[type UsageRecords = Array<{|
+  Accountid?: String, 
+  Companyid?: String, 
+  EventCode?: String, 
+  Quantity?: String
+|}> {"MetadataFormat": "csv"}]]></types:shape>
+      <types:properties>
+        <types:property name="headerLineNumber" value="0"/>
+        <types:property name="header" value="true"/>
+        <types:property name="isQuotedString" value="false"/>
+      </types:properties>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#6441da75-cc13-4f57-ac97-3f31b461dcf1">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="UsageRecords"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
